@@ -3,7 +3,8 @@ import datetime
 import argparse
 import dnsparser
 import pickle
-import io
+import time
+import os
 
 def response_isValid():
     return True
@@ -67,6 +68,10 @@ def main(localPort, dns_resolver):
     # Listen for incoming datagrams
     try:
         while True:
+            elapsedTime = time.time()-os.path.getctime("Cache.txt")
+            if elapsedTime > 10:
+                open('Cache.txt', 'w').close()
+                print("Deleted cache!")
             try:
                 message, address = UDPServerSocket.recvfrom(BUFFERSIZE)
 
@@ -97,7 +102,6 @@ def main(localPort, dns_resolver):
                     for q in questionsC:
                         res = cacheLookup(q, cache_dict, id)
                         if res != "":
-                            print('sadf')
                             # Reply to client *cache values should be stored in bytes
                             UDPServerSocket.sendto(res, address)
                             actualTime = datetime.datetime.now()
