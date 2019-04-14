@@ -43,7 +43,6 @@ def main(localPort, dns_resolver):
     log_file = open("Log.txt", "a")
     # Add Dict to cache_file
     pickle.dump({}, open('Cache.txt', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
-    #TODO Time to store cache (and not hardcoded)
     #filters_file = open("Filters.txt","rw")
 
     localIP = "127.0.0.1"
