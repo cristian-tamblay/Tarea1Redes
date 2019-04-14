@@ -69,7 +69,9 @@ def main(localPort, dns_resolver):
         while True:
             elapsedTime = time.time()-os.path.getctime("Cache.txt")
             if elapsedTime > 10:
-                open('Cache.txt', 'w').close()
+                with open('Cache.txt', 'wb') as handle:
+                    cache_dict = {}
+                    pickle.dump(cache_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
                 print("Deleted cache!")
             try:
                 message, address = UDPServerSocket.recvfrom(BUFFERSIZE)
