@@ -22,7 +22,7 @@ def requestFiltered(question, filters, resolverFormat):
     domain = question['QNAME'][:-1]
     filter_response = filters.get(domain, "")
     if filter_response == "forbidden":
-        return ""
+        return resolver[:31]+bytes("Forbidden",'utf-8')
     elif filter_response != "":
         filter_response = filter_response.split('.')
         filter_response = list(map(int,filter_response))
@@ -50,10 +50,9 @@ def cacheLookup(question, cache, id):
         response[0], response[1] = id.to_bytes(2, byteorder='big')[0], id.to_bytes(2, byteorder='big')[1]
     return response
 
-def main(localPort, dns_resolver):
+def main(localPort, dns_resolver, expiration):
 
     # Load files for log, cache and filters
-
     log_file = open("Log.txt", "a")
     # Add Dict to cache_file
     pickle.dump({}, open('Cache.txt', 'wb'), protocol=pickle.HIGHEST_PROTOCOL)
@@ -87,7 +86,7 @@ def main(localPort, dns_resolver):
     try:
         while True:
             elapsedTime = time.time()-os.path.getctime("Cache.txt")
-            if elapsedTime > 100:
+            if elapsedTime > expiration:
                 with open('Cache.txt', 'wb') as handle:
                     cache_dict = {}
                     pickle.dump(cache_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -143,7 +142,15 @@ def main(localPort, dns_resolver):
                     # Check domain name not in filter
                     for q in questionsC:
                         res = requestFiltered(q, filters_dict, resolverResponse)
-                        if res != "":
+                        if res[-9:] == bytes("Forbidden",'utf-8'):
+                            print("Forbidden Request!")
+                            actualTime = datetime.datetime.now()
+                            log_file.write("Respondido a la %s con el mensaje Forbidden, el %s.\n" % (
+                            clientIP, actualTime.strftime("%d/%m/%y a las %H:%M:%S")))
+                            UDPServerSocket.sendto(res, address)
+
+                        elif res != "":
+                            print("123")
                             # Reply to client *cache values should be stored in bytes
                             UDPServerSocket.sendto(res, address)
                             actualTime = datetime.datetime.now()
@@ -170,11 +177,11 @@ def main(localPort, dns_resolver):
                             # Reply to client
                             UDPServerSocket.sendto(resolverResponse, address)
                             actualTime = datetime.datetime.now()
+                            log_file.write("Respondido a la %s con el mensaje %s, el %s.\n" % (
+                            clientIP, resolverResponse, actualTime.strftime("%d/%m/%y a las %H:%M:%S")))
 
                     # Loggin response
-                    if response_isValid():
-                        log_file.write("Respondido a la %s con el mensaje %s, el %s.\n" % (clientIP, resolverResponse, actualTime.strftime("%d/%m/%y a las %H:%M:%S")))
-                    else:
+                    if not response_isValid():
                         log_file.write("La consulta de la %s no es valida el %s.\n" % (clientIP, actualTime.strftime("%d/%m/%y a las %H:%M:%S")))
 
                 except socket.timeout:
@@ -195,6 +202,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--port", help="port to listen for DNS requests", default="8001", type=int)
     parser.add_argument("--resolver_dns", help="DNS resolver for queries", default="8.8.8.8")
+    parser.add_argument("--expiration", help="Expiration Time", default="10", type=int)
     args = parser.parse_args()
 
-    main(args.port, args.resolver_dns)
+    main(args.port, args.resolver_dns, args.expiration)
