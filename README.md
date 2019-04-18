@@ -1,5 +1,7 @@
 # Tarea1Redes
 
+Made by Dario Palma and Cristian Tamblay
+
 ## Prerequisites
 
  * Python3
