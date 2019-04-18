@@ -76,8 +76,8 @@ def main(localPort, dns_resolver):
                 log_file.write("Recibido mensaje del cliente el %s, desde la %s, con el %s.\n" % (actualTime.strftime("%d/%m/%y a las %H:%M:%S"), clientIP, clientMsg))
 
                 # Parse and validate request
-                headerC, questionsC = dnsparser.unpackDNS(message)
-                print(headerC,questionsC)
+                headerC, questionsC, responsesC = dnsparser.unpackDNS(message)
+                print(headerC,questionsC, responsesC)
                 id = headerC['ID']
                 # Check if the request is a query
                 if headerC['QR']:
@@ -94,6 +94,7 @@ def main(localPort, dns_resolver):
                         cache_dict = pickle.load(handle)
 
                     # Check if domain's in cache
+                    cache_counter = 0
                     for q in questionsC:
                         res = cacheLookup(q, cache_dict, id)
                         if res != "":
@@ -101,6 +102,11 @@ def main(localPort, dns_resolver):
                             # Reply to client *cache values should be stored in bytes
                             UDPServerSocket.sendto(res, address)
                             actualTime = datetime.datetime.now()
+                            cache_counter += 1
+
+                    # Check if we had all the answers
+                    if cache_counter == len(questionsC):
+                        continue
 
                     # Check that the request is supported
                     # TODO
@@ -116,8 +122,8 @@ def main(localPort, dns_resolver):
                     resolverResponse, resolverAddress = UDPProxySocket.recvfrom(BUFFERSIZE)
 
                     # Get the response value's of interest
-                    headerR, questionsR = dnsparser.unpackDNS(resolverResponse)
-                    print(headerR,questionsR)
+                    headerR, questionsR, responsesR = dnsparser.unpackDNS(resolverResponse)
+                    print(headerR,questionsR, responsesR)
 
                     # Bring cache_file to RAM
                     #cache_dict = pickle.load(cache_file)
