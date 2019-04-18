@@ -9,7 +9,7 @@ import os
 def response_isValid():
     return True
 
-def requestFiltered(question, filters, resolverFormat):
+def requestFiltered(question, filters, id):
     """
     Looks up for REDIRECTS or FORBIDEN questions on a filter dict
     Args
@@ -18,7 +18,9 @@ def requestFiltered(question, filters, resolverFormat):
     Return
         - Altered response or empty string if none defined
     """
-    resolver = bytearray(resolverFormat)
+    resolver = bytearray(b'?\xec\x81\x80\x00\x01\x00\x01\x00\x00\x00\x01\ttesoreria\x02cl\x00\x00\x01\x00\x01\xc0\x0c\x00\x01\x00\x01\x00\x00\x00\xd4\x00\x04\xa4M\xf4\xf6\x00\x00)\x02\x00\x00\x00\x00\x00\x00\x00')
+    for i in resolver:
+        print(chr(i))
     domain = question['QNAME'][:-1]
     filter_response = filters.get(domain, "")
     if filter_response == "forbidden":
@@ -106,9 +108,23 @@ def main(localPort, dns_resolver):
                 id = headerC['ID']
                 # Check if the request is a query
                 if headerC['QR']:
+
                     # Load data (deserialize)
                     with open('Cache.txt', 'rb') as handle:
                         cache_dict = pickle.load(handle)
+                    # Check domain name not in filter
+                    for q in questionsC:
+                        res = requestFiltered(q, filters_dict, id)
+                        if res != "":
+                            # Reply to client *cache values should be stored in bytes
+                            UDPServerSocket.sendto(res, address)
+                            actualTime = datetime.datetime.now()
+                            with open('Cache.txt', 'rb') as handle:
+                                cache_dict = pickle.load(handle)
+                            for q in questionsC:
+                                cache_dict[repr(q)] = res
+                            with open('Cache.txt', 'wb') as handle:
+                                pickle.dump(cache_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
                     # Check if domain's in cache
                     for q in questionsC:
@@ -134,36 +150,22 @@ def main(localPort, dns_resolver):
                     # Get the response value's of interest
                     headerR, questionsR = dnsparser.unpackDNS(resolverResponse)
                     print(headerR,questionsR)
-                    # Check domain name not in filter
+
+                    # Bring cache_file to RAM
+                    with open('Cache.txt', 'rb') as handle:
+                        cache_dict = pickle.load(handle)
+
+                    # Save Resolver Response to Dict
                     for q in questionsC:
-                        res = requestFiltered(q, filters_dict, resolverResponse)
-                        if res != "":
-                            # Reply to client *cache values should be stored in bytes
-                            UDPServerSocket.sendto(res, address)
-                            actualTime = datetime.datetime.now()
-                            with open('Cache.txt', 'rb') as handle:
-                                cache_dict = pickle.load(handle)
-                            for q in questionsC:
-                                cache_dict[repr(q)] = res
-                            with open('Cache.txt', 'wb') as handle:
-                                pickle.dump(cache_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
+                        cache_dict[repr(q)] = resolverResponse
 
-                        else:
-                            # Bring cache_file to RAM
-                            with open('Cache.txt', 'rb') as handle:
-                                cache_dict = pickle.load(handle)
+                    # Store data (serialize)
+                    with open('Cache.txt', 'wb') as handle:
+                        pickle.dump(cache_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
 
-                            # Save Resolver Response to Dict
-                            for q in questionsC:
-                                cache_dict[repr(q)] = resolverResponse
-
-                            # Store data (serialize)
-                            with open('Cache.txt', 'wb') as handle:
-                                pickle.dump(cache_dict, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-                            # Reply to client
-                            UDPServerSocket.sendto(resolverResponse, address)
-                            actualTime = datetime.datetime.now()
+                    # Reply to client
+                    UDPServerSocket.sendto(resolverResponse, address)
+                    actualTime = datetime.datetime.now()
 
                     # Loggin response
                     if response_isValid():
