@@ -19,6 +19,11 @@ In case you want to use custom values for both port, resolver and cache expirati
 ```shell
 $ python3 server.py --port [port] --resolver_dns [DNS RESOLVER] --expiration [EXPIRATION]
 ```
+An example of dig usage would be the following:
+```shell
+$ dig @localhost -p 8001 [DOMAIN]
+```
+
 
 Once the server is up and running you can shut it down with Ctrl+C
 ## Cache
