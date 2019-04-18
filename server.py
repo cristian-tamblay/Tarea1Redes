@@ -122,9 +122,6 @@ def main(localPort, dns_resolver, expiration):
                     # Check if we had all the answers
                     if cache_counter == len(questionsC):
                         continue
-
-                    # Check that the request is supported
-                    # TODO
                     
                 else:
                     print("Message rejected: Not a query")
@@ -195,7 +192,7 @@ def main(localPort, dns_resolver, expiration):
     UDPProxySocket.close()
     UDPServerSocket.close()
     log_file.close()
-    #filters_file.close()
+    filters_file.close()
 
 if __name__ == "__main__":
     # Create argument parser

@@ -22,7 +22,7 @@ Once the server is up and running you can shut it down with Ctrl+C
 ## Cache
 
 The server store a cache in Cache.txt file. This is a binary file made by the serialization of the dictionary object.
-Upon expiration, the server wipes the Cache.txt file.
+Upon expiration, the server wipes the Cache.txt file, and prints the message: Deleted cache!
 
 ## Filter Configuration
 
@@ -32,6 +32,7 @@ You can use your favorite text editor to create a Filters.txt list which will be
 The list can handle pairs URL IP, or URL forbidden, just as shown in Filters.txt provided.
 
 If the URL is forbidden, no IP will be shown in dig and a beautiful warning: Warning: Message parser reports malformed message packet.
+On the server side, a Forbidden Request! will be printed.
 If the URL has a filtered IP and multiple answers, only the first one will be filtered (intended)
 ## Contact
 
