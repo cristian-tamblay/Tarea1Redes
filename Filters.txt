@@ -1,0 +1,6 @@
+ucursos.cl 121.121.121.121
+google.com 8.8.8.8
+ucampus.cl 4.3.2.1
+registrocivil.cl 5.6.7.8
+stackoverflow.com 10.9.8.7
+google.com.mx 0.0.0.0
